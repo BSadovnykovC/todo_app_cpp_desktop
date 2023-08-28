@@ -58,7 +58,12 @@ void ImguiApp::Run()
     auto renderTarget = m_d3d11ResourceHolder->GetRenderTargetView();
     auto swapChain = m_d3d11ResourceHolder->GetSwapChain();
     // Main loop
+#ifdef UNIT_TEST_MODE
+    bool done = true;
+#else
     bool done = false;
+#endif // UNIT_TEST_MODE
+
     while (!done)
     {
         // Poll and handle messages (inputs, window resize, etc.)
@@ -102,7 +107,7 @@ void ImguiApp::Run()
             ImGui::SameLine();
             if (ImGui::Button("Add"))
             {
-
+                AddTodoItem();
             }
             
             ImGui::End();
@@ -118,6 +123,14 @@ void ImguiApp::Run()
         swapChain->Present(1, 0);
     }
 }
+
+#ifdef UNIT_TEST_MODE
+void ImguiApp::EmulateAddTodoItem(const std::string& item)
+{
+    m_todoText = item;
+    AddTodoItem();
+}
+#endif
 
 void ImguiApp::InitAppWindow()
 {
@@ -149,4 +162,9 @@ void ImguiApp::InitImgui()
     ImGui_ImplWin32_Init(m_hwnd);
     auto [d3Device, d3DeviceContext] = m_d3d11ResourceHolder->GetDeviceAndContext();
     ImGui_ImplDX11_Init(d3Device, d3DeviceContext);
+}
+
+void ImguiApp::AddTodoItem()
+{
+    m_dataProvider->AddTodoItem({ m_todoText });
 }

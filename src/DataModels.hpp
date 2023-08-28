@@ -6,4 +6,8 @@ struct TodoItem
 {
     std::string title;
     std::uint64_t id;
+    bool operator==(const TodoItem& other) const
+    {
+        return title == other.title && id == other.id;
+    }
 };
