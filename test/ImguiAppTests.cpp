@@ -15,15 +15,19 @@ public:
     IDataProviderMock* dataProviderMock;
 
     const std::string testItem = "test item";
+    const std::uint64_t testId = 52353;
 };
 
-//TEST_F(ImguiAppTests, Run) {
-//    EXPECT_CALL(*dataProviderMock, GetTodoItems()).Times(1);
-//    EXPECT_CALL(*dataProviderMock, AddTodoItem(_)).Times(1);
-//    EXPECT_CALL(*dataProviderMock, CompleteTodoItem(_)).Times(1);
-//    EXPECT_CALL(*dataProviderMock, RemoveTodoItem(_)).Times(1);
-//    app->Run();
-//};
+TEST_F(ImguiAppTests, Run) {
+    EXPECT_CALL(*dataProviderMock, GetTodoItems()).Times(1);
+    EXPECT_CALL(*dataProviderMock, AddTodoItem(TodoItem{ testItem })).Times(1);
+    EXPECT_CALL(*dataProviderMock, CompleteTodoItem(testId)).Times(1);
+    EXPECT_CALL(*dataProviderMock, RemoveTodoItem(testId)).Times(1);
+    app->EmulateAddTodoItem(testItem);
+    app->EmulateCompleteTodoItem(testId);
+    app->EmulateDeleteTodoItem(testId);
+    app->Run();
+};
 
 TEST_F(ImguiAppTests, AddTodoItem)
 {
@@ -44,4 +48,18 @@ TEST_F(ImguiAppTests, GetTodoItemAfterDbUpdate)
     EXPECT_CALL(*dataProviderMock, GetTodoItems()).Times(1);
     app->EmulateAddTodoItem(testItem);
     app->Run();
+};
+
+// add unit tests for CompleteTodoItem
+TEST_F(ImguiAppTests, CompleteTodoItem)
+{
+    EXPECT_CALL(*dataProviderMock, CompleteTodoItem(testId)).Times(1);
+    app->EmulateCompleteTodoItem(testId);
+};
+
+// add unit tests for RemoveTodoItem
+TEST_F(ImguiAppTests, RemoveTodoItem)
+{
+    EXPECT_CALL(*dataProviderMock, RemoveTodoItem(testId)).Times(1);
+    app->EmulateDeleteTodoItem(testId);
 };
