@@ -6,7 +6,7 @@ using namespace ::testing;
 
 class ImguiAppTests : public Test {
 public:
-    ImguiAppTests() {
+    void SetUp() override {
         dataProviderMock = new IDataProviderMock();
         app = std::make_unique<ImguiApp>(std::unique_ptr<IDataProvider>(dataProviderMock));
     }
@@ -25,14 +25,23 @@ public:
 //    app->Run();
 //};
 
-TEST_F(ImguiAppTests, AddTodoItem) {
+TEST_F(ImguiAppTests, AddTodoItem)
+{
     EXPECT_CALL(*dataProviderMock, AddTodoItem(TodoItem{ testItem })).Times(1);
     app->EmulateAddTodoItem(testItem);
 };
-// is there any bug in the code?
-// if you run the test, you will see that the test fails
-// the test fails because the test is not written correctly
-// q: why is the test not written correctly?
-// a: the test is not written correctly because the test is not written from the perspective of the user
-// q: what is the perspective of the user?
-// a: the perspective of the user is that the user wants to add a todo item
+
+// add unit tests for GetTodoItems
+TEST_F(ImguiAppTests, GetTodoItems)
+{
+    auto dataProviderMockLocal = new IDataProviderMock();
+    EXPECT_CALL(*dataProviderMockLocal, GetTodoItems()).Times(1);
+    auto appLocal = std::make_unique<ImguiApp>(std::unique_ptr<IDataProvider>(dataProviderMockLocal));
+};
+
+TEST_F(ImguiAppTests, GetTodoItemAfterDbUpdate)
+{
+    EXPECT_CALL(*dataProviderMock, GetTodoItems()).Times(1);
+    app->EmulateAddTodoItem(testItem);
+    app->Run();
+};

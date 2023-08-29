@@ -4,7 +4,7 @@
 #include <sqlite3.h>
 #include <memory>
 
-const int dbVersion = 2;
+const int dbVersion = 1;
 // q: implement IDataProvider using SQLite
 // a: see below
 class SQLiteDataProvider : public IDataProvider
@@ -34,8 +34,8 @@ public:
 
     // q: fix build error
     // a: see below
-    void CompleteTodoItem(std::uint64_t idemId) final { throw std::exception("Not Implemented"); };
-    void RemoveTodoItem(std::uint64_t idemId) final { throw std::exception("Not Implemented"); };
+    void CompleteTodoItem(std::uint64_t idemId) final;
+    void RemoveTodoItem(std::uint64_t idemId) final;
 
 private:
     // q: add private member for database path

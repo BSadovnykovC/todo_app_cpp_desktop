@@ -65,7 +65,7 @@ target_include_directories(${TEST_TARGET} PRIVATE dependencies/sqlite
                                              dependencies/imgui/backends
                                              src)
 
-add_definitions(-DUNIT_TEST_MODE)
+target_compile_definitions(${TEST_TARGET} PRIVATE -DUNIT_TEST_MODE)
 
 add_test(
   NAME ${TEST_TARGET}
