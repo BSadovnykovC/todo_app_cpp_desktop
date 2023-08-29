@@ -158,7 +158,7 @@ void SQLiteDataProvider::RemoveTodoItem(std::uint64_t idemId)
 
 void SQLiteDataProvider::InitDB()
 {
-    auto rc = sqlite3_exec(m_db.get(), "CREATE TABLE Todos (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);", DummyCallback, nullptr, nullptr);
+    auto rc = sqlite3_exec(m_db.get(), "CREATE TABLE Todos (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, completed INTEGER DEFAULT 0);", DummyCallback, nullptr, nullptr);
     if (rc != SQLITE_OK)
     {
         throw std::exception(sqlite3_errmsg(m_db.get()));

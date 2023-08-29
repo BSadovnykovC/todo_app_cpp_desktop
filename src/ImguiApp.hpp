@@ -8,10 +8,7 @@ class ImguiApp
 {
 public:
     ImguiApp(std::unique_ptr<IDataProvider> dataProvider);
-    ~ImguiApp()
-    {
-        
-    }
+    ~ImguiApp();
     void Run();
 #ifdef UNIT_TEST_MODE
     void EmulateAddTodoItem(const std::string& item);
@@ -27,10 +24,12 @@ private:
     void CompleteTodoItem(std::uint64_t itemId);
     void RemoveTodoItem(std::uint64_t itemId);
 private:
+    WNDCLASSEXW m_wc;
     HWND m_hwnd;
     std::unique_ptr<D3D11ResourceHolder> m_d3d11ResourceHolder;
     std::string m_todoText = "";
     std::unique_ptr<IDataProvider> m_dataProvider;
     std::vector<TodoItem> m_todoItems;
     bool m_todoItemsDirty = false;
+    bool m_inited = false;
 };

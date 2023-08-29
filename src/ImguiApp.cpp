@@ -44,6 +44,19 @@ ImguiApp::ImguiApp(std::unique_ptr<IDataProvider> dataProvider) : m_dataProvider
     m_d3d11ResourceHolder = std::make_unique<D3D11ResourceHolder>(m_hwnd);
 }
 
+ImguiApp::~ImguiApp()
+{
+    if (!m_inited)
+        return;
+    // Cleanup
+    ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+
+    ::DestroyWindow(m_hwnd);
+    ::UnregisterClassW(m_wc.lpszClassName, m_wc.hInstance);
+}
+
 void ImguiApp::Run()
 {
     ::ShowWindow(m_hwnd, SW_SHOWDEFAULT);
@@ -59,6 +72,12 @@ void ImguiApp::Run()
 
     while (!done)
     {
+        if (m_todoItemsDirty)
+        {
+            m_todoItems = m_dataProvider->GetTodoItems();
+            m_todoItemsDirty = false;
+        }
+
         // Poll and handle messages (inputs, window resize, etc.)
         // See the WndProc() function below for our to dispatch events to the Win32 backend.
         MSG msg;
@@ -71,14 +90,6 @@ void ImguiApp::Run()
         }
         if (done)
             break;
-
-
-        if (m_todoItemsDirty)
-        {
-            m_todoItems = m_dataProvider->GetTodoItems();
-            m_todoItemsDirty = false;
-        }
-
 
 #ifdef UNIT_TEST_MODE
         ::PostQuitMessage(0);
@@ -179,9 +190,9 @@ std::vector<TodoItem> ImguiApp::EmulateGetTodoItems()
 
 void ImguiApp::InitAppWindow()
 {
-    WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"Todo app", nullptr };
-    ::RegisterClassExW(&wc);
-    m_hwnd = ::CreateWindowW(wc.lpszClassName, L"Todo app", WS_OVERLAPPEDWINDOW, 100, 100, windowWidth, windowHeight, nullptr, nullptr, wc.hInstance, nullptr);
+    m_wc = { sizeof(m_wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"Todo app", nullptr };
+    ::RegisterClassExW(&m_wc);
+    m_hwnd = ::CreateWindowW(m_wc.lpszClassName, L"Todo app", WS_OVERLAPPEDWINDOW, 100, 100, windowWidth, windowHeight, nullptr, nullptr, m_wc.hInstance, nullptr);
 }
 
 void ImguiApp::InitImgui()
@@ -204,6 +215,7 @@ void ImguiApp::InitImgui()
     ImGui_ImplWin32_Init(m_hwnd);
     auto [d3Device, d3DeviceContext] = m_d3d11ResourceHolder->GetDeviceAndContext();
     ImGui_ImplDX11_Init(d3Device, d3DeviceContext);
+    m_inited = true;
 }
 
 void ImguiApp::AddTodoItem()
