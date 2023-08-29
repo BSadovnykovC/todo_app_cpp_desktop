@@ -25,7 +25,8 @@ namespace {
         char s[MAXLEN];
         time_t t = time(0);
         strftime(s, MAXLEN, "%d.%m.%Y", localtime(&t));
-        return title + " - " + std::string(s);
+        auto newTitle = title + " - " + std::string(s);
+        return newTitle;
     }
 
 }
@@ -47,6 +48,7 @@ SQLiteDataProvider::SQLiteDataProvider(const std::string& dbPath)
         throw std::exception(sqlite3_errmsg(db));
     }
     m_db.reset(db);
+
     if (initDb)
     {
         rc = sqlite3_exec(m_db.get(), "CREATE TABLE Todos (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);", DummyCallback, nullptr, nullptr);
@@ -54,12 +56,13 @@ SQLiteDataProvider::SQLiteDataProvider(const std::string& dbPath)
         {
             throw std::exception(sqlite3_errmsg(db));
         }
-        sqlite3_stmt * schemeVersionStatement = nullptr;
+
         std::string pragmaVersion = "PRAGMA user_version = " + std::to_string(dbVersion) + std::string(";");
-        rc = sqlite3_prepare_v2(m_db.get(), pragmaVersion.c_str(), -1, &schemeVersionStatement, nullptr);
+        sqlite3_stmt* schemeVersionStatement = nullptr;
+        auto rc = sqlite3_prepare_v2(m_db.get(), pragmaVersion.c_str(), -1, &schemeVersionStatement, nullptr);
         if (rc != SQLITE_OK)
         {
-            throw std::exception(sqlite3_errmsg(db));
+            throw std::exception(sqlite3_errmsg(m_db.get()));
         }
 
         do
@@ -70,18 +73,31 @@ SQLiteDataProvider::SQLiteDataProvider(const std::string& dbPath)
         rc = sqlite3_finalize(schemeVersionStatement);
         if (rc != SQLITE_OK)
         {
-            throw std::exception(sqlite3_errmsg(db));
+            throw std::exception(sqlite3_errmsg(m_db.get()));
         }
     }
-    sqlite3_stmt *currentVersionStatement = nullptr;
-    sqlite3_prepare_v2(db, "PRAGMA user_version;", -1, &currentVersionStatement, nullptr);
-    sqlite3_step(currentVersionStatement);
-    m_dbVersion = sqlite3_column_int(currentVersionStatement, 0);
-    rc = sqlite3_finalize(currentVersionStatement);
+
+    sqlite3_stmt* currentVersionStatement = nullptr;
+    rc = sqlite3_prepare_v2(m_db.get(), "PRAGMA user_version;", -1, &currentVersionStatement, nullptr);
     if (rc != SQLITE_OK)
+    {
+        throw std::exception(sqlite3_errmsg(m_db.get()));
+    }
+
+
+    rc = sqlite3_step(currentVersionStatement);
+    while (rc == SQLITE_ROW)
+    {
+        m_dbVersion = sqlite3_column_int(currentVersionStatement, 0);
+        rc = sqlite3_step(currentVersionStatement);
+    }
+
+    if (rc != SQLITE_OK && rc != SQLITE_DONE)
     {
         throw std::exception(sqlite3_errmsg(db));
     }
+
+    sqlite3_finalize(currentVersionStatement);
 }
 
 void SQLiteDataProvider::AddTodoItem(const TodoItem& item)
@@ -89,7 +105,7 @@ void SQLiteDataProvider::AddTodoItem(const TodoItem& item)
 
     // q: add item to database
     // a: see below
-    sqlite3_stmt *addStatement = nullptr;
+    sqlite3_stmt* addStatement = nullptr;
     auto rc = sqlite3_prepare_v2(m_db.get(), "INSERT INTO Todos (name) VALUES (?);", -1, &addStatement, nullptr);
     if (rc != SQLITE_OK)
     {
@@ -108,12 +124,40 @@ void SQLiteDataProvider::AddTodoItem(const TodoItem& item)
         rc = sqlite3_step(addStatement);
     } while (rc == SQLITE_BUSY);
 
-    rc = sqlite3_finalize(addStatement);
+    sqlite3_finalize(addStatement);
+}
+
+
+// implement GetTodoItems to get all items from database Todos table
+std::vector<TodoItem> SQLiteDataProvider::GetTodoItems() const
+{
+    std::vector<TodoItem> items;
+    // q: get all items from database
+    // a: see below
+    sqlite3_stmt* getStatement = nullptr;
+    auto rc = sqlite3_prepare_v2(m_db.get(), "SELECT name FROM Todos;", -1, &getStatement, nullptr);
     if (rc != SQLITE_OK)
     {
         throw std::exception(sqlite3_errmsg(m_db.get()));
     }
-}
 
+    rc = sqlite3_step(getStatement);
+
+    while (rc == SQLITE_ROW)
+    {
+        TodoItem item;
+        item.title = reinterpret_cast<const char*>(sqlite3_column_text(getStatement, 0));
+        items.push_back(item);
+        rc = sqlite3_step(getStatement);
+    }
+
+    if (rc != SQLITE_OK && rc != SQLITE_DONE)
+    {
+        throw std::exception(sqlite3_errmsg(m_db.get()));
+    }
+
+    sqlite3_finalize(getStatement);
+    return items;
+}
 
 

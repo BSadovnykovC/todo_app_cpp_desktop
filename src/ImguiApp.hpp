@@ -15,6 +15,7 @@ public:
     void Run();
 #ifdef UNIT_TEST_MODE
     void EmulateAddTodoItem(const std::string& item);
+    std::vector<TodoItem> EmulateGetTodoItems();
 #endif // UNIT_TEST_MODE
 
 private:
@@ -26,4 +27,6 @@ private:
     std::unique_ptr<D3D11ResourceHolder> m_d3d11ResourceHolder;
     std::string m_todoText = "";
     std::unique_ptr<IDataProvider> m_dataProvider;
+    std::vector<TodoItem> m_todoItems;
+    bool m_todoItemsDirty = false;
 };

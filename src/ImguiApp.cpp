@@ -9,9 +9,6 @@ namespace
     const std::string appName = "Todo app";
     const uint64_t windowWidth = 640;
     const uint64_t windowHeight = 480;
-
-    //uint64_t g_ResizeWidth = 0;
-    //uint64_t g_ResizeHeight = 0;
 }
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -25,8 +22,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
         if (wParam == SIZE_MINIMIZED)
             return 0;
-        //g_ResizeWidth = (UINT)LOWORD(lParam); // Queue resize
-        //g_ResizeHeight = (UINT)HIWORD(lParam);
         return 0;
     case WM_SYSCOMMAND:
         if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
@@ -43,6 +38,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 ImguiApp::ImguiApp(std::unique_ptr<IDataProvider> dataProvider) : m_dataProvider(std::move(dataProvider))
 {
     m_todoText.resize(256);
+    m_todoItems = m_dataProvider->GetTodoItems();
     InitAppWindow();
     m_d3d11ResourceHolder = std::make_unique<D3D11ResourceHolder>(m_hwnd);
 }
@@ -57,12 +53,8 @@ void ImguiApp::Run()
     auto [d3Device, d3DeviceContext] = m_d3d11ResourceHolder->GetDeviceAndContext();
     auto renderTarget = m_d3d11ResourceHolder->GetRenderTargetView();
     auto swapChain = m_d3d11ResourceHolder->GetSwapChain();
-    // Main loop
-#ifdef UNIT_TEST_MODE
-    bool done = true;
-#else
+
     bool done = false;
-#endif // UNIT_TEST_MODE
 
     while (!done)
     {
@@ -79,16 +71,19 @@ void ImguiApp::Run()
         if (done)
             break;
 
-        /*if (g_ResizeWidth != 0 && g_ResizeHeight != 0)
-        {
-            swapChain->ResizeBuffers(0, g_ResizeWidth, g_ResizeHeight, DXGI_FORMAT_UNKNOWN, 0);
-            g_ResizeWidth = 0;
-            g_ResizeHeight = 0;
-            m_d3d11ResourceHolder->CreateRenderTarget();
-            renderTarget = m_d3d11ResourceHolder->GetRenderTargetView();
-        }*/
 
-        // Start the Dear ImGui frame
+        if (m_todoItemsDirty)
+        {
+            m_todoItems = m_dataProvider->GetTodoItems();
+            m_todoItemsDirty = false;
+        }
+
+
+#ifdef UNIT_TEST_MODE
+        ::PostQuitMessage(0);
+        return;
+#endif // UNIT_TEST_MODE
+
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
@@ -109,7 +104,14 @@ void ImguiApp::Run()
             {
                 AddTodoItem();
             }
-            
+            ImGui::BeginChild("Scrolling");
+
+            for (const auto& item : m_todoItems)
+            {
+                ImGui::Text(item.title.c_str());
+            }
+
+            ImGui::EndChild();
             ImGui::End();
         }
 
@@ -119,7 +121,7 @@ void ImguiApp::Run()
         d3DeviceContext->OMSetRenderTargets(1, &renderTarget, nullptr);
         d3DeviceContext->ClearRenderTargetView(renderTarget, clear_color_with_alpha);
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
+        
         swapChain->Present(1, 0);
     }
 }
@@ -130,6 +132,11 @@ void ImguiApp::EmulateAddTodoItem(const std::string& item)
     m_todoText = item;
     AddTodoItem();
 }
+std::vector<TodoItem> ImguiApp::EmulateGetTodoItems()
+{
+    return m_todoItems;
+}
+
 #endif
 
 void ImguiApp::InitAppWindow()
@@ -166,5 +173,9 @@ void ImguiApp::InitImgui()
 
 void ImguiApp::AddTodoItem()
 {
+    // remove all termination characters from m_todoText
+    m_todoText.erase(std::remove(m_todoText.begin(), m_todoText.end(), '\0'), m_todoText.end());
     m_dataProvider->AddTodoItem({ m_todoText });
+    m_todoItemsDirty = true;
+
 }

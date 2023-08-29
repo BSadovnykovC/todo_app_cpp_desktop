@@ -7,7 +7,7 @@ class IDataProvider
 {
 public:
     virtual ~IDataProvider() = default;
-    virtual std::vector<TodoItem> GetTodoItems() = 0;
+    virtual std::vector<TodoItem> GetTodoItems() const = 0 ;
     virtual void AddTodoItem(const TodoItem& item) = 0;
     virtual void CompleteTodoItem(std::uint64_t idemId) = 0;
     virtual void RemoveTodoItem(std::uint64_t idemId) = 0;

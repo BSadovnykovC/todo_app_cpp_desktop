@@ -29,13 +29,14 @@ public:
     // a: see below
     ~SQLiteDataProvider() final = default;
 
-    std::vector<TodoItem> GetTodoItems() final { throw std::exception("Not Implemented"); };
+    std::vector<TodoItem> GetTodoItems() const final;
     void AddTodoItem(const TodoItem& item) final;
 
     // q: fix build error
     // a: see below
     void CompleteTodoItem(std::uint64_t idemId) final { throw std::exception("Not Implemented"); };
     void RemoveTodoItem(std::uint64_t idemId) final { throw std::exception("Not Implemented"); };
+
 private:
     // q: add private member for database path
     // a: see below
