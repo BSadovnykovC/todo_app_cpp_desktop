@@ -15,6 +15,8 @@ public:
     void Run();
 #ifdef UNIT_TEST_MODE
     void EmulateAddTodoItem(const std::string& item);
+    void EmulateCompleteTodoItem(uint64_t id);
+    void EmulateDeleteTodoItem(uint64_t id);
     std::vector<TodoItem> EmulateGetTodoItems();
 #endif // UNIT_TEST_MODE
 
@@ -22,6 +24,8 @@ private:
     void InitAppWindow();
     void InitImgui();
     void AddTodoItem();
+    void CompleteTodoItem(std::uint64_t itemId);
+    void RemoveTodoItem(std::uint64_t itemId);
 private:
     HWND m_hwnd;
     std::unique_ptr<D3D11ResourceHolder> m_d3d11ResourceHolder;

@@ -9,6 +9,7 @@ namespace
     const std::string appName = "Todo app";
     const uint64_t windowWidth = 640;
     const uint64_t windowHeight = 480;
+    const uint64_t inputSize = 256;
 }
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -37,7 +38,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 ImguiApp::ImguiApp(std::unique_ptr<IDataProvider> dataProvider) : m_dataProvider(std::move(dataProvider))
 {
-    m_todoText.resize(256);
+    m_todoText.resize(inputSize);
     m_todoItems = m_dataProvider->GetTodoItems();
     InitAppWindow();
     m_d3d11ResourceHolder = std::make_unique<D3D11ResourceHolder>(m_hwnd);
@@ -106,9 +107,39 @@ void ImguiApp::Run()
             }
             ImGui::BeginChild("Scrolling");
 
-            for (const auto& item : m_todoItems)
+            for (auto& item : m_todoItems)
             {
-                ImGui::Text(item.title.c_str());
+                if (item.completed)
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+                    ImGui::Text(item.title.c_str());
+                    ImGui::PopStyleColor();
+                }
+                else
+                {
+                    ImGui::Text(item.title.c_str());
+                }
+
+                if (!item.completed)
+                {
+                    ImGui::SameLine();
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+                    auto buttonLabel = "Complete##" + std::to_string(item.id);
+                    if (ImGui::Button(buttonLabel.c_str()))
+                    {
+                        CompleteTodoItem(item.id);
+                    }
+                    ImGui::PopStyleColor();
+                }
+
+                ImGui::SameLine();
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+                auto buttonLabel = "Delete##" + std::to_string(item.id);
+                if (ImGui::Button(buttonLabel.c_str()))
+                {
+                    RemoveTodoItem(item.id);
+                }
+                ImGui::PopStyleColor();
             }
 
             ImGui::EndChild();
@@ -132,11 +163,18 @@ void ImguiApp::EmulateAddTodoItem(const std::string& item)
     m_todoText = item;
     AddTodoItem();
 }
+void ImguiApp::EmulateCompleteTodoItem(uint64_t id)
+{
+    CompleteTodoItem(id);
+}
+void ImguiApp::EmulateDeleteTodoItem(uint64_t id)
+{
+    RemoveTodoItem(id);
+}
 std::vector<TodoItem> ImguiApp::EmulateGetTodoItems()
 {
     return m_todoItems;
 }
-
 #endif
 
 void ImguiApp::InitAppWindow()
@@ -161,11 +199,8 @@ void ImguiApp::InitImgui()
     io.DisplaySize.x = static_cast<float>(rect.right - rect.left) / dpiScale ;
     io.DisplaySize.y = static_cast<float>(rect.bottom - rect.top) / dpiScale;
 
-    // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
 
-    // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(m_hwnd);
     auto [d3Device, d3DeviceContext] = m_d3d11ResourceHolder->GetDeviceAndContext();
     ImGui_ImplDX11_Init(d3Device, d3DeviceContext);
@@ -177,5 +212,18 @@ void ImguiApp::AddTodoItem()
     m_todoText.erase(std::remove(m_todoText.begin(), m_todoText.end(), '\0'), m_todoText.end());
     m_dataProvider->AddTodoItem({ m_todoText });
     m_todoItemsDirty = true;
+    m_todoText.clear();
+    m_todoText.resize(inputSize);
+}
 
+void ImguiApp::CompleteTodoItem(std::uint64_t itemId)
+{
+    m_dataProvider->CompleteTodoItem(itemId);
+    m_todoItemsDirty = true;
+}
+
+void ImguiApp::RemoveTodoItem(std::uint64_t itemId)
+{
+    m_dataProvider->RemoveTodoItem(itemId);
+    m_todoItemsDirty = true;
 }

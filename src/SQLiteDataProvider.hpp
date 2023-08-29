@@ -4,7 +4,7 @@
 #include <sqlite3.h>
 #include <memory>
 
-const int dbVersion = 1;
+const int dbVersion = 2;
 // q: implement IDataProvider using SQLite
 // a: see below
 class SQLiteDataProvider : public IDataProvider
@@ -36,7 +36,11 @@ public:
     // a: see below
     void CompleteTodoItem(std::uint64_t idemId) final;
     void RemoveTodoItem(std::uint64_t idemId) final;
-
+private:
+    void InitDB();
+    void CheckMigration();
+    void HandleMigration();
+    void FirstMigration();
 private:
     // q: add private member for database path
     // a: see below
