@@ -1,7 +1,12 @@
 Todo_app_cpp_desktop
 =====================
+# Requirements
+- Microsoft Visual Studio 2022 with v143 toolset (default for VS 2022)
+- MSBuild - usually part of VS installation
+- CMake >= 3.10
+
 # Todo app for desktop (C++)
-This is a simple todo app for desktop written in C++ using ImGui and SQLite3. It is cross-platform and can be compiled on Windows, Linux and Mac OS X.
+This is a simple todo app for desktop written in C++ using ImGui and SQLite3. Currently it can be compiled only on Windows.
 You can add, edit and delete tasks. You can also mark them as done. The tasks are saved in a database file.
 To pull the repository, you need to have git-lfs installed.
 
