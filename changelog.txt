@@ -1,0 +1,8 @@
+release-1 - Added a possibility to add “To Do Task” - Input field and Button.
+
+release-2 - Added Testing framework.
+
+release-3 - Added listing of “To Do Tasks”. Add Tests.
+
+release-4 - Added Buttons “Complete” and “Deleted” with corresponding business logic. Added tests.
+
