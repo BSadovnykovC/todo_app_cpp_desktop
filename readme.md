@@ -16,7 +16,8 @@ git clone https://github.com/BSadovnykovC/todo_app_cpp_desktop.git
 ```
 
 To compile the project, you need to have CMake installed. Use the following commands in VS Dev command prompt to compile the project:
-```mkdir build
+```
+mkdir build
 cd build
 cmake ..
 msbuild  todo_app_cpp_desktop.sln /target:todo_app_cpp_desktop /property:Configuration=Release
@@ -30,7 +31,8 @@ To run the project, use the following command:
 or enter with the mouse in the folder Release and run todo_app_cpp_desktop.exe
 
 To build tests, use the following commands in VS Dev command prompt:
-```mkdir build
+```
+mkdir build
 cd build
 cmake ..
 msbuild  todo_app_cpp_desktop.sln /target:todo_app_cpp_desktop_test /property:Configuration=Release
